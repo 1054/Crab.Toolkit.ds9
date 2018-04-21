@@ -1,0 +1,10 @@
+#!/bin/bash
+# Linux
+if [[ $(uname -s) == Linux ]]; then
+    find . -name "*.eps" -type f -print0 | xargs -0 -I % ps2pdf -dEPSCrop %
+fi
+# Darwin
+if [[ $(uname -s) == Darwin ]]; then
+    find . -name "*.eps" -type f -print0 | xargs -0 -J % ps2pdf -dEPSCrop %
+fi
+
