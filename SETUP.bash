@@ -19,6 +19,6 @@ else
     fi
 fi
 
-source "$BIN_SETUP_SCRIPT" -check ds9 ds9galfit ds9longurl
+source "$BIN_SETUP_SCRIPT" # -check ds9 ds9galfit ds9longurl
 
 

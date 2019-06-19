@@ -277,8 +277,8 @@ for (( i=1; i<=$FITNUMB; i++ )); do
     fi
     
     #echo "$TC" "$GALFITRECTX0" "$GALFITRECTY0" "$XC" "$YC"
-    XC=`bc <<< $XC-$GALFITRECTX0+1`
-    YC=`bc <<< $YC-$GALFITRECTY0+1`
+    XC=$(awk "BEGIN {print ($XC-($GALFITRECTX0)+1);}")
+    YC=$(awk "BEGIN {print ($YC-($GALFITRECTY0)+1);}")
     #echo "$TC" "$GALFITRECTX0" "$GALFITRECTY0" "$XC" "$YC"
     #echo "$TC" "$GALFITRECTX0" "$GALFITRECTY0" "$XC" "$YC"
     if [[ "$TC" == "psf" || "$TC" == "sersic"  || "$TC" == "gaussian" ]]; then

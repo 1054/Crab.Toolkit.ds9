@@ -1,0 +1,107 @@
+#!/bin/bash
+# 
+# input 1 catalog (id ra dec)
+# input 2 single band photo
+# 
+AstroMKCS_Photo=$1
+AstroMKCS_Catalog=$2
+AstroMKCS_OutputDir=$3
+AstroMKCS_FieldOfView=5 # arcsec
+LANG=C
+# 
+if [[ x"$AstroMKCS_Photo" == x || x"$AstroMKCS_Catalog" == x || x"$AstroMKCS_OutputDir" == x ]]; then 
+    echo Usage: 
+    echo     mkcutouts-multi-object Photo Multi-object-list Output-dir
+    exit
+fi
+# prepare output dir
+if [[ ! -d "$AstroMKCS_OutputDir" ]]; then
+    mkdir -p "$AstroMKCS_OutputDir"
+fi
+if [[ "$AstroMKCS_OutputDir" == *"/" ]]; then
+    AstroMKCS_OutputDir=$(echo "$AstroMKCS_OutputDir" | sed -e 's#/$##g')
+fi
+if [[ -d "$AstroMKCS_OutputDir" ]]; then
+    echo "# Region file format: DS9 version 4.1" > "$AstroMKCS_OutputDir/ds9.mosaic.reg"
+    echo "global color=green font=\"NGC\""      >> "$AstroMKCS_OutputDir/ds9.mosaic.reg"
+    echo "fk5"                                  >> "$AstroMKCS_OutputDir/ds9.mosaic.reg"
+fi
+if [[ -d "$AstroMKCS_OutputDir" ]]; then
+    echo "# InputFits InputExts InputRect" > "$AstroMKCS_OutputDir/dof.mosaic.reg"
+fi
+# echo $AstroMKCS_OutputDir
+# 
+AstroMKCS_ID_List=$(cat $AstroMKCS_Catalog | grep -v -e "^#" | sed -e 's/^ *//g' | grep -v -e "^$" | tr -s ' ' | cut -d ' ' -f 1)
+AstroMKCS_RA_List=$(cat $AstroMKCS_Catalog | grep -v -e "^#" | sed -e 's/^ *//g' | grep -v -e "^$" | tr -s ' ' | cut -d ' ' -f 2)
+AstroMKCS_DE_List=$(cat $AstroMKCS_Catalog | grep -v -e "^#" | sed -e 's/^ *//g' | grep -v -e "^$" | tr -s ' ' | cut -d ' ' -f 3)
+AstroMKCS_Number=$(cat $AstroMKCS_Catalog | grep -v -e "^#" | sed -e 's/^ *//g' | grep -v -e "^$" | tr -s ' ' | wc -l)
+# echo $AstroMKCS_ID_List
+# 
+for (( AstroMKCS_I=1; AstroMKCS_I<=$AstroMKCS_Number; AstroMKCS_I++ )); do
+    AstroMKCS_ID=$(echo $AstroMKCS_ID_List | cut -d ' ' -f $AstroMKCS_I)
+    AstroMKCS_RA=$(echo $AstroMKCS_RA_List | cut -d ' ' -f $AstroMKCS_I)
+    AstroMKCS_DE=$(echo $AstroMKCS_DE_List | cut -d ' ' -f $AstroMKCS_I)
+    echo $AstroMKCS_Photo
+    echo $AstroMKCS_ID
+    echo $AstroMKCS_RA $AstroMKCS_DE
+    # now sky2xy
+    AstroMKCS_TEMPTEXT=$(sky2xy $AstroMKCS_Photo $AstroMKCS_RA $AstroMKCS_DE J2000)
+    echo $AstroMKCS_TEMPTEXT
+    AstroMKCS_PosX=$(echo $AstroMKCS_TEMPTEXT | cut -d ' ' -f 5)
+    AstroMKCS_PosY=$(echo $AstroMKCS_TEMPTEXT | cut -d ' ' -f 6)
+    # now calc pixscale
+    AstroMKCS_PosX1=$(bc <<< $AstroMKCS_PosX-1.0)
+    AstroMKCS_PosY1=$(bc <<< $AstroMKCS_PosY-1.0)
+    AstroMKCS_TEMPTEXT=$(xy2sky -d -j -n 7 $AstroMKCS_Photo $AstroMKCS_PosX1 $AstroMKCS_PosY1)
+    echo $AstroMKCS_TEMPTEXT
+    AstroMKCS_RA1=$(echo $AstroMKCS_TEMPTEXT | cut -d ' ' -f 1)
+    AstroMKCS_DE1=$(echo $AstroMKCS_TEMPTEXT | cut -d ' ' -f 2)
+    AstroMKCS_PixScaleX=$(echo "calc abs($AstroMKCS_RA1-$AstroMKCS_RA)*3600.0*COS($AstroMKCS_DE*pi/180.0)" | sm)
+    AstroMKCS_PixScaleY=$(echo "calc abs($AstroMKCS_DE-$AstroMKCS_DE1)*3600.0" | sm)
+    AstroMKCS_PixScale=$(echo "calc ($AstroMKCS_PixScaleX+$AstroMKCS_PixScaleY)/2.0" | sm)
+    AstroMKCS_PixScale=$(echo "echo \$(sprintf('%0.3f',$AstroMKCS_PixScale))" | sm)
+    # now calc the Radius of FoV in Pix
+    AstroMKCS_PixRadFoV=$(echo "calc ($AstroMKCS_FieldOfView/$AstroMKCS_PixScale/2.0)" | sm)
+    AstroMKCS_SkyRadFoV=$(echo "calc ($AstroMKCS_FieldOfView/2.0)" | sm)
+    echo PixScale = $AstroMKCS_PixScale "($AstroMKCS_PixScaleX,$AstroMKCS_PixScaleY)"
+    echo FoV in pixels = $AstroMKCS_PixRadFoV
+    echo FoV in arcsec = $AstroMKCS_SkyRadFoV
+    # now calc the Rect of Fov in Pix
+    AstroMKCS_RectRA1=$(echo "calc $AstroMKCS_RA+$AstroMKCS_FieldOfView/2.0/3600.0/COS($AstroMKCS_DE*pi/180.0)" | sm)
+    AstroMKCS_RectRA2=$(echo "calc $AstroMKCS_RA-$AstroMKCS_FieldOfView/2.0/3600.0/COS($AstroMKCS_DE*pi/180.0)" | sm)
+    AstroMKCS_RectDE1=$(echo "calc $AstroMKCS_DE-$AstroMKCS_FieldOfView/2.0/3600.0" | sm)
+    AstroMKCS_RectDE2=$(echo "calc $AstroMKCS_DE+$AstroMKCS_FieldOfView/2.0/3600.0" | sm)
+    AstroMKCS_TEMPTEXT=$(sky2xy $AstroMKCS_Photo $AstroMKCS_RectRA1 $AstroMKCS_RectDE1 J2000); echo $AstroMKCS_TEMPTEXT
+    AstroMKCS_RectX1=$(echo $AstroMKCS_TEMPTEXT | cut -d ' ' -f 5)
+    AstroMKCS_RectY1=$(echo $AstroMKCS_TEMPTEXT | cut -d ' ' -f 6)
+    AstroMKCS_RectI1=$(echo "calc int($AstroMKCS_RectX1-1)" | sm)
+    AstroMKCS_RectJ1=$(echo "calc int($AstroMKCS_RectY1-1)" | sm)
+    AstroMKCS_PlotI1=$(echo "calc $AstroMKCS_RectX1-$AstroMKCS_RectI1-1.0" | sm)
+    AstroMKCS_PlotJ1=$(echo "calc $AstroMKCS_RectY1-$AstroMKCS_RectJ1-1.0" | sm)
+    AstroMKCS_TEMPTEXT=$(sky2xy $AstroMKCS_Photo $AstroMKCS_RectRA2 $AstroMKCS_RectDE2 J2000); echo $AstroMKCS_TEMPTEXT
+    AstroMKCS_RectX2=$(echo $AstroMKCS_TEMPTEXT | cut -d ' ' -f 5)
+    AstroMKCS_RectY2=$(echo $AstroMKCS_TEMPTEXT | cut -d ' ' -f 6)
+    AstroMKCS_RectI2=$(echo "calc int($AstroMKCS_RectX2)-1+1" | sm)
+    AstroMKCS_RectJ2=$(echo "calc int($AstroMKCS_RectY2)-1+1" | sm)
+    AstroMKCS_PlotI2=$(echo "calc $AstroMKCS_RectX2-$AstroMKCS_RectI1-1.0" | sm)
+    AstroMKCS_PlotJ2=$(echo "calc $AstroMKCS_RectY2-$AstroMKCS_RectJ1-1.0" | sm)
+    echo $AstroMKCS_RectI1 $AstroMKCS_RectJ1 $AstroMKCS_RectI2 $AstroMKCS_RectJ2
+    echo $AstroMKCS_PlotI1 $AstroMKCS_PlotJ1 $AstroMKCS_PlotI2 $AstroMKCS_PlotJ2
+    # now cut the photo
+    echo CrabFitsImageCrop "$AstroMKCS_Photo" -rect $AstroMKCS_RectI1 $AstroMKCS_RectJ1 $AstroMKCS_RectI2 $AstroMKCS_RectJ2 -out "$AstroMKCS_OutputDir/$AstroMKCS_ID.fits"
+         CrabFitsImageCrop "$AstroMKCS_Photo" -rect $AstroMKCS_RectI1 $AstroMKCS_RectJ1 $AstroMKCS_RectI2 $AstroMKCS_RectJ2 -out "$AstroMKCS_OutputDir/$AstroMKCS_ID.fits"
+    # now output the ds9 region file
+    echo "circle($AstroMKCS_RA,$AstroMKCS_DE,3\") # text={$AstroMKCS_ID}"
+    echo "circle($AstroMKCS_RA,$AstroMKCS_DE,3\") # text={$AstroMKCS_ID}" >> "$AstroMKCS_OutputDir/ds9.mosaic.reg"
+    # now output the dof mosaic file
+    # printf "%80s%15d%15.3f%15.3f%15.3f%15.3f\n" "$AstroMKCS_Photo" "0" "$AstroMKCS_PlotI1" "$AstroMKCS_PlotJ1" "$AstroMKCS_PlotI2" "$AstroMKCS_PlotJ2" > "$AstroMKCS_OutputDir/dof.mosaic.reg"
+    printf "%s[0](%0.3f,%0.3f,%0.3f,%0.3f)\n" "$AstroMKCS_ID.fits" "$AstroMKCS_PlotI1" "$AstroMKCS_PlotI2" "$AstroMKCS_PlotJ1" "$AstroMKCS_PlotJ2" >> "$AstroMKCS_OutputDir/dof.mosaic.reg"
+    # exit
+    echo 
+done
+
+cd "$AstroMKCS_OutputDir"
+\cp "$AstroMKCS_Catalog" "obj.mosaic.txt"
+echo Please run these: 
+echo     idl -e "mkcutouts_do_fits_mosaic"
+# mkcutouts-do-fits-mosaic

@@ -1,0 +1,5 @@
+#!/bin/bash
+# 
+echo $(pwd)
+AstroMKCS_DS9TITLE="mkcutouts-do-fits-mosaic"
+ds9 -title "$AstroMKCS_DS9TITLE" *.fits &
