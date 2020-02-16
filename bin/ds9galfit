@@ -25,6 +25,9 @@ DS9GALFIT_TITLE=""
 DS9GALFIT_FILEP=()
 DS9GALFIT_COMMP=()
 DS9GALFIT_SCALES=()
+DS9GALFIT_SCALEMODE=()
+DS9GALFIT_ZOOMTO=()
+DS9GALFIT_SAVEIMAGE=()
 DS9GALFIT_HAS_TITLE=0
 DS9GALFIT_HAS_SCALE=0
 DS9GALFIT_HAS_CMAP=0
@@ -47,8 +50,40 @@ while [[ $# -gt 0 ]]; do
         shift
         continue
     fi
+    if [[ "$TempStr" == *"-saveimage" ]]; then
+        if [[ $# -gt 2 ]]; then
+            shift
+            DS9GALFIT_SAVEIMAGE+=("$1")
+            shift
+            DS9GALFIT_SAVEIMAGE+=("$1")
+        fi
+        shift
+        continue
+    fi
+    if [[ "$TempStr" == *"-zoom" ]]; then
+        if [[ $# -gt 2 ]]; then
+            if [[ x"$2" == x"to" ]]; then
+                shift
+                shift
+                DS9GALFIT_ZOOMTO+=("$1")
+                shift
+                continue
+            fi
+        fi
+    fi
+    if [[ "$TempStr" == *"-scale" ]]; then
+        if [[ $# -gt 2 ]]; then
+            if [[ x"$2" == x"mode" ]]; then
+                shift
+                shift
+                DS9GALFIT_SCALEMODE+=("$1")
+                shift
+                continue
+            fi
+        fi
+    fi
     if [[ "$TempStr" == *".fits" ]]; then
-        DS9GALFIT_FILEP+=("$1")
+        DS9GALFIT_FILEP+=("$1") #<TODO># should we limit to only one input fits? For now we assume there is only one input, and we can only handle one input.
     fi
     DS9GALFIT_COMMP+=("$1")
     shift
@@ -171,6 +206,27 @@ xpaset -p $DS9GALFIT_TITLE frame 3
 
 
 
+if [[ 1 == 1 ]]; then
+    # display text labels
+    NAXIS1=$(xpaget $DS9GALFIT_TITLE fits width)
+    NAXIS2=$(xpaget $DS9GALFIT_TITLE fits height)
+    CENX=$(awk "BEGIN {print ($NAXIS1+1)/2.0;}")
+    TOPY=$(awk "BEGIN {print ($NAXIS2+0.075*($NAXIS2));}")
+    xpaset -p $DS9GALFIT_TITLE zoom to fit
+    xpaset -p $DS9GALFIT_TITLE zoom 0.75
+    xpaset -p $DS9GALFIT_TITLE frame first
+    echo "image; text $CENX $TOPY # text={Input} font={helvetica 18 bold roman}" | xpaset $DS9GALFIT_TITLE regions
+    xpaset -p $DS9GALFIT_TITLE frame next
+    echo "image; text $CENX $TOPY # text={Model} font={helvetica 18 bold roman}" | xpaset $DS9GALFIT_TITLE regions
+    xpaset -p $DS9GALFIT_TITLE frame next
+    echo "image; text $CENX $TOPY # text={Residual} font={helvetica 18 bold roman}" | xpaset $DS9GALFIT_TITLE regions
+    
+    xpaset -p $DS9GALFIT_TITLE frame first
+    xpaset -p $DS9GALFIT_TITLE frame next
+fi
+
+
+
 # 
 # Set scale limits
 # 
@@ -243,12 +299,25 @@ for (( i=1; i<=$FITNUMB; i++ )); do
     
     FITMAG=$(echo $MAG | grep -v "\[" | grep -v "\]" | wc -l) # whether the magnitude are fitted or fixed
     
+    PIXSC=$(CrabTableReadInfo ".CrabFitsHeader.txt" "CDELT2" | cut -d ' ' -f 1)
+    if [[ x"$PIXSC" == x ]]; then
+        PIXSC=$(CrabTableReadInfo ".CrabFitsHeader.txt" "CD2_2" | cut -d ' ' -f 1)
+    fi
+    if [[ x"$PIXSC" == x ]]; then
+        PIXSC=2.5
+    else
+        PIXSC=$(awk "BEGIN {print sqrt(($PIXSC)*($PIXSC))*3600.0;}")
+    fi
+    
+    PIXZOOM=2
+    
     if [[ x"$FWHM" == x ]]; then 
-        MAJ="2.5"
+        # point source, shown with a 0.5 pixel radius
+        MAJ=0.5 # $(awk "BEGIN {print (0.5/PIXSC);}")
         FITMAJ=0
         LINEWIDTH=1
     else
-        MAJ=$(awk "BEGIN {print (($FWHM)/2.0)*2.5}") #<TODO># multiply by a factor of 2.5 for viewing purpose
+        MAJ=$(awk "BEGIN {print (($FWHM)/2.0)*$PIXZOOM}") #<TODO># multiply by a factor of 2.5 for viewing purpose
         FITMAJ=$(echo $FWHM | grep -v "\[" | grep -v "\]" | wc -l)
         LINEWIDTH=2
     fi
@@ -258,7 +327,7 @@ for (( i=1; i<=$FITNUMB; i++ )); do
         FITMIN=0
         LINEWIDTH=1
     else
-        MIN=$(awk "BEGIN {print (($FWHM)*($ELLI)/2.0)*2.5}") #<TODO># multiply by a factor of 2.5 for viewing purpose
+        MIN=$(awk "BEGIN {print (($FWHM)*($ELLI)/2.0)*$PIXZOOM}") #<TODO># multiply by a factor of 2.5 for viewing purpose
         FITMIN=$(echo $ELLI | grep -v "\[" | grep -v "\]" | wc -l)
         LINEWIDTH=2
     fi
@@ -296,6 +365,28 @@ for (( i=1; i<=$FITNUMB; i++ )); do
         break
     fi
 done
+
+
+
+if [[ ${#DS9GALFIT_ZOOMTO[@]} -gt 0 ]]; then
+    echo xpaset -p $DS9GALFIT_TITLE zoom to "${DS9GALFIT_ZOOMTO[0]}"
+    xpaset -p $DS9GALFIT_TITLE zoom to "${DS9GALFIT_ZOOMTO[0]}"
+fi
+
+
+if [[ ${#DS9GALFIT_SCALEMODE[@]} -gt 0 ]]; then
+    echo xpaset -p $DS9GALFIT_TITLE scale mode "${DS9GALFIT_SCALEMODE[0]}"
+    xpaset -p $DS9GALFIT_TITLE scale mode "${DS9GALFIT_SCALEMODE[0]}"
+    xpaset -p $DS9GALFIT_TITLE scale limits $(xpaget $DS9GALFIT_TITLE scale limits) # rematch all frames
+fi
+
+
+if [[ ${#DS9GALFIT_SAVEIMAGE[@]} -gt 0 ]]; then
+    for (( i = 0; i < ${#DS9GALFIT_SAVEIMAGE[@]}; i+=2 )); do
+        echo xpaset -p $DS9GALFIT_TITLE saveimage "${DS9GALFIT_SAVEIMAGE[i+0]}" "${DS9GALFIT_SAVEIMAGE[i+1]}"
+        xpaset -p $DS9GALFIT_TITLE saveimage "${DS9GALFIT_SAVEIMAGE[i+0]}" "${DS9GALFIT_SAVEIMAGE[i+1]}"
+    done
+fi
 
 
 

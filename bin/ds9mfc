@@ -1,0 +1,93 @@
+#!/bin/bash
+# 
+# Usage: ds9mfc fit789.fits
+if [ $# -eq 0 ] ; then
+    echo "Usage: "
+    echo "       ds9mfc fit789.fits"
+    echo 
+    exit
+    # check input
+    # echo $@
+    # echo $*
+    # SubFileList=($@)
+    # echo ${SubFileList[0]}
+    # echo ${SubFileList[1]}
+    # find files
+    # SubFileStr=$(ls $1)
+    # echo $SubFileStr
+    # echo ${SubFileStr[1]}
+    # call ds9
+    # ds9 -title xpads9 -port 0 -mecube -tile $* -mode crosshair -lock crosshair wcs -lock crop wcs -lock frame wcs -lock slice yes -lock bin yes -lock scale yes -lock colorbar yes -cube lock yes & 
+fi
+# 
+# 
+DS9MFC_FILEP=$1
+# 
+# 
+if [[ $* == *-title* ]]; then
+    DS9MFC_TITLE=`expr "$*" : '.*-title \([^\ \-]*\)'`
+    $(dirname $0)/ds9 -multiframe -tile mode column -lock frame image -lock scale yes -lock colorbar yes -region showtext no $* &
+else
+    # first define title
+    DS9MFC_TNUMB=1 
+    DS9MFC_ISDUP=`ps aux | grep "ds9 -title ds9mfc_$DS9MFC_TNUMB" | wc -l | tr -d " "`
+    while [[ $DS9MFC_ISDUP -gt 1 ]]; do
+        DS9MFC_TNUMB=`expr $DS9MFC_TNUMB + 1`
+        DS9MFC_ISDUP=`ps aux | grep "ds9 -title ds9mfc_$DS9MFC_TNUMB" | wc -l | tr -d " "`
+    done
+    DS9MFC_TITLE="ds9mfc_$DS9MFC_TNUMB"
+    ds9 -title $DS9MFC_TITLE -multiframe -tile mode column -lock frame image -lock scale yes -lock colorbar yes -region showtext no $* &
+fi
+# 
+# 
+#DS9MFC_FILEP=$(echo " $* " | sed -E 's#.* +([a-z.]*fits) +.*#\1#g')
+#if [[ x"$DS9MFC_FILEP" == x ]]; then 
+#    echo Error! Please give fits file!
+#    exit
+#fi
+#echo $DS9MFC_FILEP
+#exit
+# 
+# check fits image
+if [[ ! -f "$DS9MFC_FILEP" ]]; then
+    echo ""
+    echo "Error! $DS9MFC_FILEP not found! Please check the fits file!"
+    echo ""
+    exit 1
+fi
+# 
+# check CrabFitsHeader
+#DS9MFC_CHECK=$(CrabFitsHeader 2>&1 >/dev/null)
+#if [[ "$DS9MFC_CHECK" == *"command not found" ]]; then
+#    echo ""
+#    echo "Error! CrabFitsHeader not found! Please contact dzliu!"
+#    echo ""
+#    exit 1
+#else 
+#    CrabFitsHeader $DS9MFC_FILEP > ".CrabFitsHeader.txt"
+#fi
+# 
+# check CrabTableReadInfo
+#DS9MFC_CHECK=$(CrabTableReadInfo 2>&1 >/dev/null)
+#if [[ "$DS9MFC_CHECK" == *"command not found" ]]; then
+#    echo ""
+#    echo "Error! CrabTableReadInfo not found! Please contact dzliu!"
+#    echo ""
+#    exit 1
+#fi
+# 
+echo -n Initializing ds9 .
+# 
+echo -n .
+# 
+#DS9MFC_ISRUN=$(xpaget $DS9MFC_TITLE fits type 2>&1 >/dev/null)
+#while [[ "$DS9MFC_ISRUN" == "XPA\$ERROR no 'xpaget' access points"* ]]; do
+#    echo -n .
+#    DS9MFC_ISRUN=$(xpaget $DS9MFC_TITLE fits type 2>&1 >/dev/null)
+#                 # xpaget $DS9MFC_TITLE fits type #<DEBUG>#
+#    sleep 0.5
+#done
+#echo 
+
+
+

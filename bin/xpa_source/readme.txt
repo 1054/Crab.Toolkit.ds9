@@ -15,3 +15,10 @@ see:
 https://hea-www.harvard.edu/RD/xpa/
 
 
+
+
+
+
+
+Notes:
+20191209 If xpa does not work, try `export XPA_METHOD=localhost`
