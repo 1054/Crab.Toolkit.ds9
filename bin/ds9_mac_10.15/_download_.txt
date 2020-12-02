@@ -1,0 +1,2 @@
+wget -c http://ds9.si.edu/download/darwincatalina/ds9.darwincatalina.8.1.tar.gz
+wget -c http://ds9.si.edu/download/darwincatalina/xpa.darwincatalina.2.1.18.tar.gz

@@ -32,7 +32,9 @@ fi
 if [[ $(uname -s) == Darwin ]]; then
     #$(dirname $0)/ds9_mac/ds9_v7p5_mac.app/Contents/MacOS/ds9 "$@"
     # check Mac OS version
-    if [[ $(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g') == "10.14" ]]; then
+    if [[ $(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g') == "10.15" ]]; then
+        ${root_dirname}/ds9_mac_10.15/${root_basename} "$@"
+    elif [[ $(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g') == "10.14" ]]; then
         ${root_dirname}/ds9_mac_10.14/${root_basename} "$@"
     elif [[ $(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g') == "10.13" ]]; then
         ${root_dirname}/ds9_mac_10.13/${root_basename} "$@"
