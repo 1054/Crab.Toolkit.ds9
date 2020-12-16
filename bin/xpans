@@ -21,30 +21,40 @@ root_basename=$(basename "${BASH_SOURCE[0]}")
 
 # Linux
 if [[ $(uname -s) == Linux ]]; then
-    if [[ $(bc <<< "$(ldd --version | head -n 1 | tr -s ' ' | cut -d ' ' -f 4 | cut -d '.' -f 2)<14") -eq 1 ]]; then
-        # the supercomputer planer has an old GLIBC version
-        ${root_dirname}/ds9_linux_Glibc_2.12/${root_basename}_linux_x86_64 "$@"
-    else
-        ${root_dirname}/ds9_linux_Glibc_2.14/${root_basename}_linux_x86_64 "$@"
+    ldd_versions=($(ldd --version | head -n 1 | perl -p -e 's/.* ([0-9.]*)/\1/g' | perl -p -e 's/\./ /g'))
+    bin_dirname="ds9_linux_Glibc_2.14"
+    if [[ ${#crab_ldd[@]} -ge 2 ]]; then
+        if [[ $(awk "BEGIN { if(0${ldd_versions[0]}==02) print 1; else print 0; }") -eq 1 ]]; then
+            if [[ $(awk "BEGIN { if(0${linux_ldd_versions[1]}<=012) print 1; else print 0; }") -eq 1 ]]; then
+                bin_dirname="ds9_linux_Glibc_2.12" # For computer with old GLIBC version
+            elif [[ $(awk "BEGIN { if(0${ldd_versions[1]}<=014) print 1; else print 0; }") -eq 1 ]]; then
+                bin_dirname="ds9_linux_Glibc_2.14" # For computer with old GLIBC version
+            fi
+        fi
     fi
+    ${root_dirname}/${bin_dirname}/${root_basename}_linux_x86_64 "$@"
 fi
 # Darwin
 if [[ $(uname -s) == Darwin ]]; then
     #$(dirname $0)/ds9_mac/ds9_v7p5_mac.app/Contents/MacOS/ds9 "$@"
     # check Mac OS version
-    if [[ $(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g') == "10.15" ]]; then
-        ${root_dirname}/ds9_mac_10.15/${root_basename} "$@"
-    elif [[ $(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g') == "10.14" ]]; then
-        ${root_dirname}/ds9_mac_10.14/${root_basename} "$@"
-    elif [[ $(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g') == "10.13" ]]; then
-        ${root_dirname}/ds9_mac_10.13/${root_basename} "$@"
-    else
-        ${root_dirname}/ds9_mac_10.12/${root_basename} "$@"
+    mas_os_version=$(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g')
+    bin_dirname="ds9_mac_10.15"
+    if [[ "${mas_os_version}" == "10.12" ]]; then
+        bin_dirname="ds9_mac_10.12"
+    elif [[ "${mas_os_version}" == "10.13" ]]; then
+        bin_dirname="ds9_mac_10.13"
+    elif [[ "${mas_os_version}" == "10.14" ]]; then
+        bin_dirname="ds9_mac_10.14"
+    elif [[ "${mas_os_version}" == "10.15" ]]; then
+        bin_dirname="ds9_mac_10.15"
     fi
+    ${root_dirname}/${bin_dirname}/${root_basename} "$@"
 fi
 # Cygwin
 if [[ $(uname -s) == *CYGWIN* ]]; then
-    ${root_dirname}/ds9_cygwin/${root_basename}_cygwin_x86.exe "$@"
+    bin_dirname="ds9_cygwin"
+    ${root_dirname}/${bin_dirname}/${root_basename}_cygwin_x86.exe "$@"
 fi
 
 
