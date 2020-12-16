@@ -23,7 +23,7 @@ root_basename=$(basename "${BASH_SOURCE[0]}")
 if [[ $(uname -s) == Linux ]]; then
     ldd_versions=($(ldd --version | head -n 1 | perl -p -e 's/.* ([0-9.]*)/\1/g' | perl -p -e 's/\./ /g'))
     bin_dirname="ds9_linux_Glibc_2.14"
-    if [[ ${#crab_ldd[@]} -ge 2 ]]; then
+    if [[ ${#ldd_versions[@]} -ge 2 ]]; then
         if [[ $(awk "BEGIN { if(0${ldd_versions[0]}==02) print 1; else print 0; }") -eq 1 ]]; then
             if [[ $(awk "BEGIN { if(0${linux_ldd_versions[1]}<=012) print 1; else print 0; }") -eq 1 ]]; then
                 bin_dirname="ds9_linux_Glibc_2.12" # For computer with old GLIBC version
