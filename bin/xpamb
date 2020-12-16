@@ -18,7 +18,7 @@ root_basename=$(basename "${BASH_SOURCE[0]}")
 # Linux
 if [[ $(uname -s) == Linux ]]; then
     ldd_versions=($(ldd --version | head -n 1 | perl -p -e 's/.* ([0-9.]+) *$/\1/g' | perl -p -e 's/\./ /g'))
-    bin_dirname="ds9_linux_Glibc_2.14"
+    bin_dirname="ds9_linux_Glibc_2.27"
     if [[ ${#ldd_versions[@]} -ge 2 ]]; then
         ldd_version_major="${ldd_versions[0]}"
         ldd_version_minor="${ldd_versions[1]}"
@@ -27,6 +27,8 @@ if [[ $(uname -s) == Linux ]]; then
                 bin_dirname="ds9_linux_Glibc_2.12" # For computer with old GLIBC version
             elif [[ $(bc <<< "${ldd_version_minor}<=14") -eq 1 ]]; then
                 bin_dirname="ds9_linux_Glibc_2.14" # For computer with old GLIBC version
+            elif [[ $(bc <<< "${ldd_version_minor}<=27") -eq 1 ]]; then
+                bin_dirname="ds9_linux_Glibc_2.27" # For computer with old GLIBC version
             fi
         fi
     fi
