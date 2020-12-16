@@ -1,0 +1,10 @@
+http://ds9.si.edu/download/ubuntu18/ds9.ubuntu18.8.1.tar.gz
+
+Ubuntu 18
+ldd --version
+ldd (Ubuntu GLIBC 2.27-3ubuntu1.3) 2.27
+
+uname -r
+4.15.0-128-generic
+
+
