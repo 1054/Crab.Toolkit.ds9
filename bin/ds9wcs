@@ -56,13 +56,14 @@ done
 # 
 # 
 ds9 -title $DS9WCS_TITLE -multiframe ${DS9WCS_tile[@]} -lock frame wcs \
-    -lock scale yes -lock colorbar yes -lock slice wcs \
-    -region showtext no \
+    -lock slice wcs \
     "${DS9WCS_fits[@]}" \
     ${DS9WCS_args[@]} \
     -scale match &
+    # -lock scale yes -lock colorbar yes
     # -lock scalelimits yes
     # -scale match limits
+    # -region showtext no
 # 
 echo -n Initializing ds9 .
 # 
