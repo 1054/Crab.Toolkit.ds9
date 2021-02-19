@@ -31,37 +31,61 @@ done
 DS9WCS_TITLE="ds9wcs_$DS9WCS_TNUMB"
 # 
 # 
-# pre-define tile
+# pre-define tile multiframe lock frame wcs
+DS9WCS_title=(-title $DS9WCS_TITLE)
 DS9WCS_tile=(-tile mode column)
+DS9WCS_multiframe=(-multiframe)
+DS9WCS_lock_frame=(-lock frame wcs)
+DS9WCS_lock_slice=(-lock slice wcs)
+screen_width_height=($(xdpyinfo 2>/dev/null | grep dimensions | perl -p -e 's/^[^0-9]*([0-9]+)x([0-9]+).*$/\1 \2/'))
+if [[ ${#screen_width_height[@]} -eq 2 ]]; then
+    DS9WCS_width=(-width $(awk "BEGIN {print int(${screen_width_height[0]}*0.75+0.5);}"))
+    DS9WCS_height=(-height $(awk "BEGIN {print int(${screen_width_height[1]}*0.40+0.5);}"))
+else
+    DS9WCS_width=()
+    DS9WCS_height=()
+fi
+DS9WCS_frame=() # (-frame first)
+DS9WCS_zoom=(-zoom to fit)
 # 
 # 
 # read user input
 DS9WCS_fits=()
 DS9WCS_args=()
 while [[ $# -ge 1 ]]; do
-    if [[ "$1" == "-title" ]]; then
-        shift
-        DS9WCS_TITLE="$1"
-    elif [[ "$1" == "-tile" ]]; then
+    if [[ "$1" == "-title" ]] && [[ $# -ge 2 ]]; then
+        DS9WCS_TITLE="$2"
+        DS9WCS_title=()
+    elif [[ "$1" == "-tile" ]] && [[ $# -ge 3 ]]; then
         DS9WCS_tile=()
-        DS9WCS_args+=(-tile)
+    elif [[ "$1" == "-multiframe" ]] || [[ "$1" == "-mecube" ]]; then
+        DS9WCS_multiframe=()
+    elif [[ "$1" == "-width" ]] && [[ $# -ge 2 ]]; then
+        DS9WCS_width=()
+    elif [[ "$1" == "-height" ]] && [[ $# -ge 2 ]]; then
+        DS9WCS_height=()
+    elif [[ "$1" == "-frame" ]] && [[ $# -ge 2 ]]; then
+        DS9WCS_frame=()
+    elif [[ "$1" == "-zoom" ]] && [[ $# -ge 2 ]]; then
+        DS9WCS_zoom=()
+    elif [[ "$1" == "-lock" ]] && [[ $# -ge 3 ]] && [[ "$2" == "frame" ]]; then
+        DS9WCS_lock_frame=()
+    elif [[ "$1" == "-lock" ]] && [[ $# -ge 3 ]] && [[ "$2" == "slice" ]]; then
+        DS9WCS_lock_slice=()
     elif [[ "$1" == *".fits" ]] || [[ "$1" == *".FITS" ]] || [[ "$1" == *".fits.gz" ]] || [[ "$1" == *".FITS.gz" ]]; then
         DS9WCS_fits+=("$1")
         echo "FITS: $1"
-    else
-        DS9WCS_args+=("$1")
     fi
+    DS9WCS_args+=($1)
     shift
 done
 # 
 # 
-ds9 -title $DS9WCS_TITLE -multiframe ${DS9WCS_tile[@]} -lock frame wcs \
-    -lock slice wcs \
-    "${DS9WCS_fits[@]}" \
-    ${DS9WCS_args[@]} \
-    -scale match &
+echo ds9 ${DS9WCS_title[@]} ${DS9WCS_tile[@]} ${DS9WCS_multiframe[@]} ${DS9WCS_lock_frame[@]} ${DS9WCS_lock_slice[@]} ${DS9WCS_args[@]} ${DS9WCS_width[@]} ${DS9WCS_height[@]} ${DS9WCS_frame[@]} ${DS9WCS_zoom[@]}
+ds9 ${DS9WCS_title[@]} ${DS9WCS_tile[@]} ${DS9WCS_multiframe[@]} ${DS9WCS_lock_frame[@]} ${DS9WCS_lock_slice[@]} ${DS9WCS_args[@]} ${DS9WCS_width[@]} ${DS9WCS_height[@]} ${DS9WCS_frame[@]} ${DS9WCS_zoom[@]} &
     # -lock scale yes -lock colorbar yes
     # -lock scalelimits yes
+    # -scale match
     # -scale match limits
     # -region showtext no
 # 
@@ -69,14 +93,16 @@ echo -n Initializing ds9 .
 # 
 echo -n .
 # 
-#DS9WCS_ISRUN=$(xpaget $DS9WCS_TITLE fits type 2>&1 >/dev/null)
-#while [[ "$DS9WCS_ISRUN" == "XPA\$ERROR no 'xpaget' access points"* ]]; do
-#    echo -n .
-#    DS9WCS_ISRUN=$(xpaget $DS9WCS_TITLE fits type 2>&1 >/dev/null)
-#                 # xpaget $DS9WCS_TITLE fits type #<DEBUG>#
-#    sleep 0.5
-#done
-#echo 
+if [[ 1 == 0 ]]; then
+DS9WCS_ISRUN=$(xpaget $DS9WCS_TITLE fits type 2>&1 >/dev/null)
+while [[ "$DS9WCS_ISRUN" == "XPA\$ERROR no 'xpaget' access points"* ]]; do
+    echo -n .
+    DS9WCS_ISRUN=$(xpaget $DS9WCS_TITLE fits type 2>&1 >/dev/null)
+                 # xpaget $DS9WCS_TITLE fits type #<DEBUG>#
+    sleep 0.5
+done
+fi
+echo 
 
 
 

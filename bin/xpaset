@@ -23,11 +23,13 @@ if [[ $(uname -s) == Linux ]]; then
         ldd_version_major="${ldd_versions[0]}"
         ldd_version_minor="${ldd_versions[1]}"
         if [[ $(bc <<< "${ldd_version_major}==2") -eq 1 ]]; then
-            if [[ $(bc <<< "${ldd_version_minor}<=12") -eq 1 ]]; then
+            if [[ $(bc <<< "${ldd_version_minor}>=12") -eq 1 ]]; then
                 bin_dirname="ds9_linux_Glibc_2.12" # For computer with old GLIBC version
-            elif [[ $(bc <<< "${ldd_version_minor}<=14") -eq 1 ]]; then
+            fi
+            if [[ $(bc <<< "${ldd_version_minor}>=14") -eq 1 ]]; then
                 bin_dirname="ds9_linux_Glibc_2.14" # For computer with old GLIBC version
-            elif [[ $(bc <<< "${ldd_version_minor}<=27") -eq 1 ]]; then
+            fi
+            if [[ $(bc <<< "${ldd_version_minor}>=27") -eq 1 ]]; then
                 bin_dirname="ds9_linux_Glibc_2.27" # For computer with old GLIBC version
             fi
         fi
