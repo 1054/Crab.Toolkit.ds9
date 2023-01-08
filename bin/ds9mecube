@@ -1,0 +1,25 @@
+#!/bin/bash
+# 
+
+scale=zscale
+iarg=1
+infiles=()
+while [[ $iarg -le $# ]]; do
+    argstr="${!iarg}"
+    if [[ "$argstr" == "-scale" ]]; then
+        iarg=$((iarg+1))
+        if [[ $iarg -le $# ]]; then
+            scale="${!iarg}"
+        fi
+    else
+        infiles+=("${!iarg}")
+    fi
+    iarg=$((iarg+1))
+done
+
+echo ds9 -tile mode column -lock frame image -lock slice image -scale $scale -mecube ${infiles[@]} -width 1600 -height 600 -zoom to fit
+
+ds9 -tile mode column -lock frame image -lock slice image -scale $scale -mecube ${infiles[@]} -width 1600 -height 600 -zoom to fit &
+
+sleep 2.0
+

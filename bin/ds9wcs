@@ -34,9 +34,10 @@ DS9WCS_TITLE="ds9wcs_$DS9WCS_TNUMB"
 # pre-define tile multiframe lock frame wcs
 DS9WCS_title=(-title $DS9WCS_TITLE)
 DS9WCS_tile=(-tile mode column)
-DS9WCS_multiframe=(-multiframe)
+DS9WCS_multiframe=() # (-multiframe)
 DS9WCS_lock_frame=(-lock frame wcs)
 DS9WCS_lock_slice=(-lock slice wcs)
+DS9WCS_lock_crosshair=(-lock crosshair wcs)
 screen_width_height=($(xdpyinfo 2>/dev/null | grep dimensions | perl -p -e 's/^[^0-9]*([0-9]+)x([0-9]+).*$/\1 \2/'))
 if [[ ${#screen_width_height[@]} -eq 2 ]]; then
     DS9WCS_width=(-width $(awk "BEGIN {print int(${screen_width_height[0]}*0.75+0.5);}"))
@@ -72,6 +73,8 @@ while [[ $# -ge 1 ]]; do
         DS9WCS_lock_frame=()
     elif [[ "$1" == "-lock" ]] && [[ $# -ge 3 ]] && [[ "$2" == "slice" ]]; then
         DS9WCS_lock_slice=()
+    elif [[ "$1" == "-lock" ]] && [[ $# -ge 3 ]] && [[ "$2" == "crosshair" ]]; then
+        DS9WCS_lock_crosshair=()
     elif [[ "$1" == *".fits" ]] || [[ "$1" == *".FITS" ]] || [[ "$1" == *".fits.gz" ]] || [[ "$1" == *".FITS.gz" ]]; then
         DS9WCS_fits+=("$1")
         echo "FITS: $1"
@@ -81,8 +84,8 @@ while [[ $# -ge 1 ]]; do
 done
 # 
 # 
-echo ds9 ${DS9WCS_title[@]} ${DS9WCS_tile[@]} ${DS9WCS_multiframe[@]} ${DS9WCS_lock_frame[@]} ${DS9WCS_lock_slice[@]} ${DS9WCS_args[@]} ${DS9WCS_width[@]} ${DS9WCS_height[@]} ${DS9WCS_frame[@]} ${DS9WCS_zoom[@]}
-ds9 ${DS9WCS_title[@]} ${DS9WCS_tile[@]} ${DS9WCS_multiframe[@]} ${DS9WCS_lock_frame[@]} ${DS9WCS_lock_slice[@]} ${DS9WCS_args[@]} ${DS9WCS_width[@]} ${DS9WCS_height[@]} ${DS9WCS_frame[@]} ${DS9WCS_zoom[@]} &
+echo ds9 ${DS9WCS_title[@]} ${DS9WCS_tile[@]} ${DS9WCS_multiframe[@]} ${DS9WCS_lock_frame[@]} ${DS9WCS_lock_slice[@]} ${DS9WCS_lock_crosshair[@]} ${DS9WCS_args[@]} ${DS9WCS_width[@]} ${DS9WCS_height[@]} ${DS9WCS_frame[@]} ${DS9WCS_zoom[@]}
+ds9 ${DS9WCS_title[@]} ${DS9WCS_tile[@]} ${DS9WCS_multiframe[@]} ${DS9WCS_lock_frame[@]} ${DS9WCS_lock_slice[@]} ${DS9WCS_lock_crosshair[@]} ${DS9WCS_args[@]} ${DS9WCS_width[@]} ${DS9WCS_height[@]} ${DS9WCS_frame[@]} ${DS9WCS_zoom[@]} &
     # -lock scale yes -lock colorbar yes
     # -lock scalelimits yes
     # -scale match

@@ -29,6 +29,9 @@ if [[ $(uname -s) == Linux ]]; then
             if [[ $(bc <<< "${ldd_version_minor}>=14") -eq 1 ]]; then
                 bin_dirname="ds9_linux_Glibc_2.14" # For computer with old GLIBC version
             fi
+            if [[ $(bc <<< "${ldd_version_minor}>=17") -eq 1 ]]; then
+                bin_dirname="ds9_linux_Glibc_2.17" # For computer with old GLIBC version
+            fi
             if [[ $(bc <<< "${ldd_version_minor}>=27") -eq 1 ]]; then
                 bin_dirname="ds9_linux_Glibc_2.27" # For computer with old GLIBC version
             fi
@@ -42,15 +45,18 @@ if [[ $(uname -s) == Darwin ]]; then
     # check Mac OS version
     mas_os_version=$(sw_vers | grep "ProductVersion" | perl -p -e 's/ProductVersion:\s([0-9]+\.[0-9]+).*/\1/g')
     bin_dirname="ds9_mac_10.15"
-    if [[ "${mas_os_version}" == "10.12" ]]; then
-        bin_dirname="ds9_mac_10.12"
-    elif [[ "${mas_os_version}" == "10.13" ]]; then
-        bin_dirname="ds9_mac_10.13"
-    elif [[ "${mas_os_version}" == "10.14" ]]; then
-        bin_dirname="ds9_mac_10.14"
-    elif [[ "${mas_os_version}" == "10.15" ]]; then
-        bin_dirname="ds9_mac_10.15"
+    if [[ -d "${root_dirname}/ds9_mac_${mas_os_version}" ]]; then
+        bin_dirname="ds9_mac_${mas_os_version}"
     fi
+    #if [[ "${mas_os_version}" == "10.12" ]]; then
+    #    bin_dirname="ds9_mac_10.12"
+    #elif [[ "${mas_os_version}" == "10.13" ]]; then
+    #    bin_dirname="ds9_mac_10.13"
+    #elif [[ "${mas_os_version}" == "10.14" ]]; then
+    #    bin_dirname="ds9_mac_10.14"
+    #elif [[ "${mas_os_version}" == "10.15" ]]; then
+    #    bin_dirname="ds9_mac_10.15"
+    #fi
     ${root_dirname}/${bin_dirname}/${root_basename} "$@"
 fi
 # Cygwin

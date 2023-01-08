@@ -1,0 +1,13 @@
+https://ds9.si.edu/download/centos7/ds9.centos7.8.4.1.tar.gz
+
+ldd --version
+ldd (GNU libc) 2.17
+
+uname -r
+3.10.0-1160.81.1.el7.x86_64
+
+gcc --version
+gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-44)
+
+
+
